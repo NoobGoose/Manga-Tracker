@@ -3,6 +3,7 @@ import requests
 import discord
 import asyncio
 import ast
+import os
 
 client = discord.Client()
 
@@ -14,11 +15,13 @@ async def update_runner():
       channel = client.get_channel(id=int(channel_id))
       print("update()")
       delete_val = update()
-      updated = check_for_update()
-      if updated != [] and delete_val:
-        print(updated)
-        await channel.send(str(updated) + " has been updated!")
-      await asyncio.sleep(600)
+      if delete_val:
+        updated = check_for_update()
+        if updated != []:
+          print(updated)
+          await channel.send(str(updated) + " has been updated!")
+      
+      await asyncio.sleep(300)
 
 def check_for_update():
   history = open("history.txt", "r")
@@ -32,11 +35,12 @@ def check_for_update():
     if prev[key].find("-") != -1:
       prev_val = prev[key][prev[key].find("-") + 1:]
     if post[key].find("-") != -1:
-      post_val = val= post[key][:post[key].find("-")]
+      post_val = post[key][:post[key].find("-")]
     if post_val > prev_val:
       print(key + " has been updated")
       return_keys.append(key)
   return return_keys
+
 def update():
   url_list = open("tracking_url.txt","r")
   url_list = url_list.read()
@@ -90,6 +94,11 @@ async def on_message(message):
     url_list = open("tracking_url.txt","r")
     await message.channel.send(url_list.read())
 
+  elif message.content == "/clear":
+    url_list = open("tracking_url.txt","w")
+    url_list.write("")
+    await message.channel.send("Tracking list has been cleared")
+
   elif message.content.startswith("/track"):
     url = message.content.replace("/track", "")
     url_list = open("tracking_url.txt","a+")
@@ -100,4 +109,4 @@ async def on_message(message):
 
 keep_alive()
 client.loop.create_task(update_runner())
-client.run("Token")
+client.run(os.environ['TOKEN'])
